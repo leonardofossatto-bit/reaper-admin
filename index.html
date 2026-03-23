@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<link rel="apple-touch-icon" href="link-para-sua-logo.png">
+
+    <meta charset="UTF-8">
+    <title>Reaper Automate PRO - V5.7</title>
+    <style>
+	
+	
+	
+        :root {
+            --primary: #00a2ff; --bg: #0b0e14; --card: #151921; --header: #1c222d;
+            --input-bg: #1e2530; --text: #e1e1e1; --text-dim: #8a8f98;
+            --danger: #ff4757; --success: #2ed573; --warning: #ffa502;
+        }
+
+        body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        
+		/* Ajustes para telas pequenas (Celular) */
+		@media (max-width: 768px) {
+			nav.collapsed { width: 0; padding: 0; } /* Esconde a sidebar de vez no celular */
+			
+			.dash-grid { grid-template-columns: 1fr 1fr; } /* Cards em duas colunas */
+			
+			table { display: block; overflow-x: auto; white-space: nowrap; } /* Tabela ganha scroll lateral */
+			
+			.modal-content { width: 95%; padding: 15px; margin: 10px auto; }
+			.form-row { grid-template-columns: 1fr; } /* Formulário vira uma coluna só */
+			
+			.brand .logo { font-size: 16px; } /* Diminui logo para caber tudo */
+		}
+		
+        /* LOGIN */
+		#login-screen { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+		.login-box { background: var(--card); padding: 35px; border-radius: 16px; border: 1px solid #333; width: 320px; text-align: center; }
+		.form-group input { width: 100%; box-sizing: border-box; } /* Garante que ambos fiquem iguais */
+		.pass-wrapper { position: relative; display: flex; align-items: center; width: 100%; }
+		.pass-toggle { position: absolute; right: 12px; cursor: pointer; opacity: 0.6; font-size: 16px; user-select: none; }
+		.pass-toggle:hover { opacity: 1; }
+
+        /* HEADER */
+        header { background: var(--header); padding: 12px 25px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2d3436; z-index: 100; }
+        .brand { display: flex; align-items: center; gap: 15px; }
+        .btn-toggle { cursor: pointer; font-size: 20px; color: var(--primary); background: none; border: none; padding: 5px; }
+        .logo { font-size: 20px; font-weight: 800; color: var(--primary); }
+        .logo span { color: #fff; }
+
+        .main-container { display: flex; flex: 1; overflow: hidden; }
+        
+        /* SIDEBAR DINÂMICA */
+        nav { width: 230px; background: var(--card); padding: 15px; border-right: 1px solid #2d3436; display: flex; flex-direction: column; gap: 8px; transition: 0.3s; }
+        nav.collapsed { width: 70px; padding: 15px 10px; }
+        .nav-item { padding: 12px 15px; border-radius: 8px; cursor: pointer; color: var(--text-dim); font-weight: 600; white-space: nowrap; display: flex; align-items: center; gap: 12px; }
+        .nav-item i { font-style: normal; font-size: 18px; }
+        .nav-item span { transition: opacity 0.2s; }
+        nav.collapsed .nav-item span { opacity: 0; width: 0; pointer-events: none; }
+        .nav-item:hover, .nav-item.active { background: var(--primary); color: #fff; }
+
+        main { flex: 1; padding: 25px; overflow-y: auto; }
+        .section { display: none; }
+        .section.active { display: block; }
+		
+		/* Pílulas de máquinas dentro do Modal */
+		.mac-list-modal { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 5px; background: #0b0e14; padding: 10px; border-radius: 8px; border: 1px solid #333; min-height: 40px; }
+		.mac-item { background: #1e2530; color: #fff; padding: 5px 10px; border-radius: 6px; font-size: 11px; display: flex; align-items: center; gap: 8px; border: 1px solid #444; }
+		.mac-item b { color: var(--danger); cursor: pointer; font-size: 14px; }
+		.mac-item b:hover { color: #ff6b81; }
+
+        /* DASHBOARD & CARDS */
+        .dash-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: var(--card); padding: 18px; border-radius: 12px; border: 1px solid #333; cursor: pointer; transition: 0.2s; border-left: 4px solid var(--primary); }
+        .stat-card:hover { transform: translateY(-3px); }
+        
+        /* Cores Ativos/Bloqueados/Vencidos */
+        #card-ativo, .tag-ativo { border-left-color: var(--success); color: var(--success); }
+        #card-bloqueado, .tag-bloqueado { border-left-color: var(--danger); color: var(--danger); }
+        #card-vencido, .tag-vencido { border-left-color: var(--warning); color: var(--warning); }
+        .active-filter { background: #1e2530; border-width: 2px; }
+
+        /* TOOLBAR */
+        .toolbar { display: flex; gap: 10px; margin-bottom: 20px; align-items: center; }
+        .search-input { background: var(--input-bg); border: 1px solid #333; color: #fff; padding: 10px 15px; border-radius: 8px; flex: 1; outline: none; }
+		
+		
+		.search-wrapper {
+			position: relative;
+			display: flex;
+			align-items: center;
+			flex: 1; /* Faz a barra ocupar o espaço disponível */
+		}
+
+		.search-wrapper .search-input {
+			width: 100%;
+			padding-right: 35px; /* Espaço para o X não cobrir o texto */
+		}
+
+		.btn-clear-search {
+			position: absolute;
+			right: 12px;
+			background: none;
+			border: none;
+			color: var(--text-dim);
+			cursor: pointer;
+			font-size: 14px;
+			display: none; /* Só aparece quando tem texto */
+			user-select: none;
+			font-weight: bold;
+		}
+
+		.btn-clear-search:hover {
+			color: var(--danger);
+		}
+				
+        table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 12px; overflow: hidden; font-size: 13px; }
+        th { text-align: left; padding: 12px; background: #1c222d; color: var(--text-dim); font-size: 10px; text-transform: uppercase; }
+        td { padding: 12px; border-bottom: 1px solid #2d3436; }
+
+        .tag { padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; }
+        .bg-vencido { background: var(--warning); color: #000; margin-right: 5px; }
+        
+        .btn { padding: 10px 18px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; font-size: 12px; display: inline-flex; align-items: center; gap: 8px; }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-icon { background: #252b36; color: #fff; padding: 8px; border-radius: 6px; border: none; cursor: pointer; }
+        .btn-icon:hover { background: var(--primary); }
+
+        /* EXTRATO FINANCEIRO */
+        .fin-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
+        .cat-list { background: #1a1e26; border-radius: 12px; padding: 15px; border: 1px solid #333; }
+        .cat-item { display: flex; justify-content: space-between; padding: 8px 10px; border-bottom: 1px solid #252b36; font-size: 13px; cursor: pointer; border-radius: 4px; }
+        .cat-item:hover { background: #252b36; }
+
+        /* MODAIS */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 2000; backdrop-filter: blur(6px); }
+        .modal-content { background: var(--card); max-width: 600px; margin: 40px auto; padding: 30px; border-radius: 16px; border: 1px solid #444; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 15px; }
+        .form-group label { font-size: 11px; color: var(--text-dim); font-weight: bold; }
+        .form-group input, .form-group select, .form-group textarea { background: var(--input-bg); border: 1px solid #333; color: #fff; padding: 12px; border-radius: 8px; outline: none; }
+    </style>
+</head>
+<body>
+
+<div id="login-screen">
+    <div class="login-box">
+        <h2 style="color:var(--primary); margin-bottom: 25px;">REAPER <span style="color:#fff">AUTOMATE PRO</span></h2>
+        <div class="form-group">
+            <input type="text" id="l-user" placeholder="Usuário Admin">
+        </div>
+        <div class="form-group pass-wrapper">
+            <input type="password" id="l-pass" placeholder="Senha" onkeypress="if(event.key === 'Enter') handleAuth()">
+            <span class="pass-toggle" id="eye-icon" onclick="togglePass('l-pass')">👁️</span>
+        </div>
+        <button class="btn btn-primary" style="width:100%; margin-top: 10px;" onclick="handleAuth()">ACESSAR</button>
+        <p id="l-msg" style="color:var(--danger); font-size:11px; margin-top:10px"></p>
+    </div>
+</div>
+
+<header>
+    <div class="brand">
+        <button class="btn-toggle" onclick="toggleSidebar()">☰</button>
+        <div class="logo">REAPER <span>AUTOMATE PRO</span></div>
+    </div>
+    <div style="font-size: 13px; color: var(--text-dim);">
+        <span id="admin-name">Visitante</span> | <span id="clock">00:00:00</span>
+    </div>
+</header>
+
+<div class="main-container">
+    <nav id="sidebar" class="collapsed">
+        <div class="nav-item active" onclick="changeTab('usuarios', this)"><i>📂</i> <span>Gerenciar Usuários</span></div>
+        <div class="nav-item" onclick="changeTab('financeiro', this)"><i>💳</i> <span>Financeiro / Fluxo</span></div>
+        <button class="btn btn-outline" style="margin-top:auto; color:var(--danger); background:none; border:none; cursor:pointer" onclick="location.reload()">Sair</button>
+    </nav>
+
+    <main>
+        <div id="tab-usuarios" class="section active">
+            <div class="dash-grid">
+                <div class="stat-card" id="card-ativo" onclick="filterUsers('ativo')"><h3>Ativos</h3><p class="val" id="c-ativos">0</p></div>
+                <div class="stat-card" id="card-bloqueado" onclick="filterUsers('bloqueado')"><h3>Bloqueados</h3><p class="val" id="c-bloqueados">0</p></div>
+                <div class="stat-card" id="card-vencido" onclick="filterUsers('vencido')"><h3>Vencidos</h3><p class="val" id="c-vencidos">0</p></div>
+                <div class="stat-card" style="cursor:default"><h3>Máquinas Ativas</h3><p class="val" id="c-maquinas">0</p></div>
+            </div>
+
+            <div class="toolbar">
+                <div class="search-wrapper">
+					<input type="text" id="search-u" class="search-input" placeholder="Filtrar usuários..." 
+						   onkeyup="checkSearch('search-u', 'btn-u-clear', 'u-table')">
+					<span id="btn-u-clear" class="btn-clear-search" onclick="resetSearch('search-u', 'btn-u-clear', 'u-table')">✖</span>
+				</div>
+                <button class="btn btn-primary" onclick="openUserModal()">+ Adicionar Usuário</button>
+            </div>
+
+            <table id="u-table">
+                <thead><tr><th>Cliente</th><th>Máquinas IDs</th><th>Qtd</th><th>Vencimento</th><th>Status</th><th>Ações</th></tr></thead>
+                <tbody id="body-u"></tbody>
+            </table>
+        </div>
+
+        <div id="tab-financeiro" class="section">
+            <div class="dash-grid">
+                <div class="stat-card" style="border-left-color: var(--success)" onclick="filterFinByTipo('Entrada')"><h3>Entradas</h3><p class="val" id="f-in">R$ 0,00</p></div>
+                <div class="stat-card" style="border-left-color: var(--danger)" onclick="filterFinByTipo('Gasto')">
+					<h3>Saídas</h3>
+					<p class="val" id="f-out">R$ 0,00</p>
+				</div>
+                <div class="stat-card" onclick="clearFinFilter()"><h3>Saldo Período</h3><p class="val" id="f-total">R$ 0,00</p></div>
+            </div>
+
+            <div class="fin-summary">
+                <div class="cat-list"><h4 style="margin:0 0 10px 0; color:var(--success)">Entradas por Grupo</h4><div id="ext-in"></div></div>
+                <div class="cat-list"><h4 style="margin:0 0 10px 0; color:var(--danger)">Saídas por Grupo</h4><div id="ext-out"></div></div>
+            </div>
+
+            <div class="toolbar">
+                <input type="date" id="f-start" class="search-input" style="max-width:130px" onchange="renderFinanceiro()">
+                <input type="date" id="f-end" class="search-input" style="max-width:130px" onchange="renderFinanceiro()">
+                <div class="search-wrapper">
+					<input type="text" id="search-f" class="search-input" placeholder="Buscar no extrato..." 
+						   onkeyup="checkSearch('search-f', 'btn-f-clear', 'f-table')">
+					<span id="btn-f-clear" class="btn-clear-search" onclick="resetSearch('search-f', 'btn-f-clear', 'f-table')">✖</span>
+				</div>
+                <button class="btn btn-primary" style="background:var(--success); color:#000" onclick="openFinModal('Entrada')">+ Entrada</button>
+                <button class="btn btn-primary" style="background:var(--danger)" onclick="openFinModal('Gasto')">+ Gasto</button>
+            </div>
+
+            <table id="f-table">
+                <thead><tr><th>Data</th><th>Descrição</th><th>Grupo</th><th>Valor</th><th>Ações</th></tr></thead>
+                <tbody id="body-f"></tbody>
+            </table>
+        </div>
+    </main>
+</div>
+
+<div id="modal-user" class="modal"><div class="modal-content">
+    <h2 id="u-modal-title" style="margin:0 0 20px 0; color:var(--primary)">Cadastro de Usuário</h2>
+    <div class="form-row">
+        <div class="form-group"><label>Nome</label><input type="text" id="u-nome"></div>
+        <div class="form-group"><label>Email</label><input type="email" id="u-email"></div>
+        <div class="form-group"><label>Limite Maqs</label><input type="number" id="u-limite" value="3"></div>
+        <div class="form-group"><label>Valor (R$)</label><input type="number" id="u-valor" value="150"></div>
+        <div class="form-group"><label>Data Venda</label><input type="date" id="u-venda"></div>
+        <div class="form-group"><label>Validade</label><input type="date" id="u-val"></div>
+        <div class="form-group" style="grid-column: span 2"><label>Observações</label><textarea id="u-obs" rows="2"></textarea></div>
+		<div class="form-group" style="grid-column: span 2">
+		<label>Máquinas Vinculadas (HWIDs) - Clique no X para remover</label>
+		<div id="u-mac-list" class="mac-list-modal">
+			</div>
+	</div>
+    </div>
+    <div style="display:flex; justify-content: flex-end; gap:10px; margin-top:15px">
+        <button class="btn btn-outline" onclick="closeModals()">Sair</button>
+        <button class="btn btn-primary" onclick="saveUser()">SALVAR</button>
+    </div>
+</div></div>
+
+<div id="modal-fin" class="modal"><div class="modal-content">
+    <h2 id="f-modal-title" style="margin:0 0 20px 0">Lançamento</h2>
+    <input type="hidden" id="f-id">
+    <input type="hidden" id="f-tipo">
+    <input type="hidden" id="f-user-ref"> <div class="form-row">
+        <div class="form-group" style="grid-column: span 2"><label>Descrição</label><input type="text" id="f-desc"></div>
+        <div class="form-group"><label>Valor (R$)</label><input type="number" id="f-valor"></div>
+        <div class="form-group"><label>Data</label><input type="date" id="f-date"></div>
+        <div class="form-group" style="grid-column: span 2"><label>Grupo</label><select id="f-grupo"></select></div>
+    </div>
+    <div style="display:flex; justify-content: flex-end; gap:10px; margin-top:15px">
+        <button class="btn btn-outline" onclick="closeModals()">Sair</button>
+        <button class="btn btn-primary" onclick="saveFinanceiro()">SALVAR</button>
+    </div>
+</div></div>
+
+<script>
+    const dbURL = "https://reaper-26e29-default-rtdb.firebaseio.com/";
+    const grpsIn = ["Vendas Software", "Consultoria", "Outros"];
+    const grpsOut = ["Retirada Leo", "Retirada Mateus", "Servidor/API", "Marketing", "Outros"];
+    let dbVendas = {}, dbAtiv = {}, dbFin = {}, uFilter = null;
+
+    // --- AUTH ---
+    async function handleAuth() {
+        const u = document.getElementById('l-user').value;
+        const p = document.getElementById('l-pass').value;
+        const res = await fetch(dbURL + "admins.json").then(r => r.json()) || {};
+        if (Object.keys(res).length === 0) {
+            await fetch(dbURL + `admins/${u}.json`, { method: 'PUT', body: JSON.stringify({pass: p}) });
+            location.reload();
+        } else if (res[u] && res[u].pass === p) {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('admin-name').innerText = u;
+            refresh();
+        } else { document.getElementById('l-msg').innerText = "Credenciais incorretas!"; }
+    }
+
+    // --- REFRESH ---
+    async function refresh() {
+        const [v, a, f] = await Promise.all([
+            fetch(dbURL + "vendas.json").then(r => r.json()),
+            fetch(dbURL + "ativacoes.json").then(r => r.json()),
+            fetch(dbURL + "financeiro.json").then(r => r.json())
+        ]);
+        dbVendas = v || {}; dbAtiv = a || {}; dbFin = f || {};
+        renderUsuarios(); renderFinanceiro();
+    }
+
+    // --- USUÁRIOS ---
+    function renderUsuarios() {
+        const body = document.getElementById('body-u'); body.innerHTML = "";
+        let at=0, bl=0, ve=0, mq=0;
+        const hoje = new Date().toISOString().split('T')[0];
+
+        Object.keys(dbVendas).reverse().forEach(k => {
+            const u = dbVendas[k];
+            const maqs = dbAtiv[k] || {};
+            const qtd = Object.keys(maqs).length;
+            const isVencido = u.validade && u.validade !== "Vitalício" && u.validade < hoje;
+
+            if(u.status === 'ativo') at++; else bl++;
+            if(isVencido) ve++; mq += qtd;
+
+            body.innerHTML += `
+                <tr data-status="${u.status}" data-vencido="${isVencido}">
+                    <td><b>${u.nome}</b><br><small>${u.email}</small></td>
+                    <td>${Object.keys(maqs).map(m => `<span class="tag" style="background:#222; margin-right:3px">${m.substring(0,6)}</span>`).join('') || '--'}</td>
+                    <td><b>${qtd}/${u.limite_maquinas}</b></td>
+                    <td>${isVencido ? '<span class="tag bg-vencido">VENCIDO</span>' : ''}${u.validade || 'Vitalício'}</td>
+                    <td><span class="tag tag-${u.status}">${u.status.toUpperCase()}</span></td>
+                    <td>
+                        <button class="btn-icon" onclick="openUserModal('${k}')">✏️</button>
+                        <button class="btn-icon" onclick="toggleStatus('${k}','${u.status}')">${u.status==='ativo'?'🚫':'✅'}</button>
+                    </td>
+                </tr>`;
+        });
+        document.getElementById('c-ativos').innerText = at;
+        document.getElementById('c-bloqueados').innerText = bl;
+        document.getElementById('c-vencidos').innerText = ve;
+        document.getElementById('c-maquinas').innerText = mq;
+        applyUFilter();
+    }
+	
+	// --- FUNÇÕES NOVAS PARA O BOTÃO X ---
+
+		// Verifica se mostra o X enquanto digita
+		function checkSearch(inputId, btnId, tableId) {
+			const val = document.getElementById(inputId).value;
+			const btn = document.getElementById(btnId);
+			
+			// Mostra o X se tiver texto
+			btn.style.display = val.length > 0 ? "block" : "none";
+			
+			// Executa a busca na tabela
+			searchTable(val, tableId);
+		}
+
+		// Limpa tudo ao clicar no X
+		function resetSearch(inputId, btnId, tableId) {
+			const input = document.getElementById(inputId);
+			input.value = "";
+			document.getElementById(btnId).style.display = "none";
+			
+			// Reset do Financeiro
+			if(inputId === 'search-f') {
+				currentFinType = null; 
+				document.querySelectorAll('#tab-financeiro .stat-card').forEach(c => c.classList.remove('active-filter'));
+				document.querySelectorAll('#f-table tbody tr').forEach(tr => tr.style.display = '');
+			}
+
+			// Reset de Usuários
+			if(inputId === 'search-u') {
+				uFilter = null;
+				document.querySelectorAll('#tab-usuarios .stat-card').forEach(c => c.classList.remove('active-filter'));
+				searchTable("", tableId);
+			}
+
+			input.focus();
+		}
+
+    // --- FINANCEIRO ---
+    function renderFinanceiro() {
+        const start = document.getElementById('f-start').value || "0000-00-00";
+        const end = document.getElementById('f-end').value || "9999-99-99";
+        const body = document.getElementById('body-f'); body.innerHTML = "";
+        let tIn = 0, tOut = 0;
+        let sumsIn = { "Vendas Software": 0 }, sumsOut = {};
+        grpsIn.forEach(g => sumsIn[g] = 0); grpsOut.forEach(g => sumsOut[g] = 0);
+
+        // Vendas Automáticas (Vêm dos usuários)
+		Object.keys(dbVendas).forEach(k => {
+			const u = dbVendas[k];
+			if(u.data_venda >= start && u.data_venda <= end) {
+				const val = parseFloat(u.valor || 0); 
+				tIn += val; 
+				sumsIn["Vendas Software"] += val;
+				body.innerHTML += `<tr data-tipo="Entrada"><td>${u.data_venda}</td><td>Venda: ${u.nome}</td><td>Vendas Software</td><td style="color:var(--success)">R$ ${val.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td><td><button class="btn-icon" onclick="openFinModal('Entrada', null, '${k}')">✏️</button></td></tr>`;			}
+		});
+
+        // Lançamentos Manuais
+		Object.keys(dbFin).reverse().forEach(k => {
+			const f = dbFin[k];
+			if(f.data >= start && f.data <= end) {
+				if(f.tipo === 'Entrada') { 
+					tIn += f.valor; 
+					sumsIn[f.grupo] = (sumsIn[f.grupo]||0) + f.valor; 
+				} else { 
+					tOut += f.valor; 
+					sumsOut[f.grupo] = (sumsOut[f.grupo]||0) + f.valor; 
+				}
+			body.innerHTML += `<tr data-tipo="${f.tipo}"><td>${f.data}</td><td>${f.desc}</td><td>${f.grupo}</td><td style="color:${f.tipo==='Entrada'?'var(--success)':'var(--danger)'}">R$ ${parseFloat(f.valor).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</td><td><button class="btn-icon" onclick="openFinModal('${f.tipo}','${k}')">✏️</button> <button class="btn-icon" onclick="deleteFin('${k}')">🗑️</button></td></tr>`;			}
+		});
+
+		document.getElementById('f-in').innerText = "R$ " + tIn.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+		document.getElementById('f-out').innerText = "R$ " + tOut.toLocaleString('pt-BR', {minimumFractionDigits: 2});
+		document.getElementById('f-total').innerText = "R$ " + (tIn - tOut).toLocaleString('pt-BR', {minimumFractionDigits: 2});
+        renderExtrato('ext-in', sumsIn); renderExtrato('ext-out', sumsOut);
+    }
+
+    // --- MODAL FINANCEIRO (REVISADO PARA EDIÇÃO DE USUÁRIO) ---
+    function openFinModal(tipo, id = null, userKey = null) {
+        document.getElementById('modal-fin').style.display = 'block';
+        document.getElementById('f-id').value = id || "";
+        document.getElementById('f-tipo').value = tipo;
+        document.getElementById('f-user-ref').value = userKey || "";
+        
+        const sel = document.getElementById('f-grupo'); sel.innerHTML = "";
+        (tipo === 'Entrada' ? grpsIn : grpsOut).forEach(g => sel.innerHTML += `<option>${g}</option>`);
+
+        if(userKey) { // Edição de uma Venda que pertence a um usuário
+            const u = dbVendas[userKey];
+            document.getElementById('f-desc').value = "Venda: " + u.nome;
+            document.getElementById('f-valor').value = u.valor;
+            document.getElementById('f-date').value = u.data_venda;
+            document.getElementById('f-grupo').value = "Vendas Software";
+        } else if(id) { // Edição de lançamento manual
+            const f = dbFin[id];
+            document.getElementById('f-desc').value = f.desc;
+            document.getElementById('f-valor').value = f.valor;
+            document.getElementById('f-date').value = f.data;
+            document.getElementById('f-grupo').value = f.grupo;
+        } else { // Novo lançamento
+            document.getElementById('f-desc').value = ""; document.getElementById('f-valor').value = "";
+            document.getElementById('f-date').valueAsDate = new Date();
+        }
+    }
+
+    async function saveFinanceiro() {
+        const userK = document.getElementById('f-user-ref').value;
+        const val = parseFloat(document.getElementById('f-valor').value);
+        const data = document.getElementById('f-date').value;
+
+        if(userK) { // Atualiza no cadastro do usuário
+            await fetch(`${dbURL}vendas/${userK}/valor.json`, { method: 'PUT', body: JSON.stringify(val) });
+            await fetch(`${dbURL}vendas/${userK}/data_venda.json`, { method: 'PUT', body: JSON.stringify(data) });
+        } else { // Salva lançamento manual
+            const id = document.getElementById('f-id').value || Date.now();
+            const d = { desc: document.getElementById('f-desc').value, valor: val, data: data, grupo: document.getElementById('f-grupo').value, tipo: document.getElementById('f-tipo').value };
+            await fetch(`${dbURL}financeiro/${id}.json`, { method: 'PUT', body: JSON.stringify(d) });
+        }
+        closeModals(); refresh();
+    }
+
+    // --- ACTIONS USUARIOS ---
+    // 1. Atualize a função para listar as máquinas ao abrir o modal
+	function openUserModal(key = null) {
+		document.getElementById('modal-user').style.display = 'block';
+		const macContainer = document.getElementById('u-mac-list');
+		macContainer.innerHTML = ""; // Limpa a lista anterior
+
+		if(key) {
+			const u = dbVendas[key];
+			document.getElementById('u-nome').value = u.nome;
+			document.getElementById('u-email').value = u.email;
+			document.getElementById('u-email').disabled = true;
+			document.getElementById('u-limite').value = u.limite_maquinas;
+			document.getElementById('u-valor').value = u.valor;
+			document.getElementById('u-venda').value = u.data_venda;
+			document.getElementById('u-val').value = u.validade === 'Vitalício' ? '' : u.validade;
+			document.getElementById('u-obs').value = u.obs || "";
+
+			// Listar Máquinas do Usuário
+			const maqs = dbAtiv[key] || {};
+			const ids = Object.keys(maqs);
+			
+			if(ids.length === 0) {
+				macContainer.innerHTML = "<small style='color:#555'>Nenhuma máquina vinculada.</small>";
+			} else {
+				ids.forEach(id => {
+					macContainer.innerHTML += `
+						<div class="mac-item">
+							<span>${id.substring(0,12)}...</span>
+							<b onclick="delMaq('${key}', '${id}')" title="Remover Máquina">×</b>
+						</div>`;
+				});
+			}
+		} else {
+			// Lógica de Novo Usuário (limpar campos)
+			document.querySelectorAll('#modal-user input, #modal-user textarea').forEach(i => i.value = "");
+			document.getElementById('u-email').disabled = false;
+			document.getElementById('u-venda').valueAsDate = new Date();
+			macContainer.innerHTML = "<small style='color:#555'>Novos usuários não possuem máquinas.</small>";
+		}
+	}
+
+	// 2. Nova função para deletar a máquina direto do Firebase
+	async function delMaq(userKey, macId) {
+		if(confirm("Deseja remover este ID de máquina? O usuário poderá cadastrar uma nova no lugar.")) {
+			try {
+				await fetch(`${dbURL}ativacoes/${userKey}/${macId}.json`, { method: 'DELETE' });
+				
+				// Atualiza os dados locais (dbAtiv) para refletir a mudança sem fechar o modal
+				delete dbAtiv[userKey][macId];
+				
+				// Atualiza a visualização da lista no modal e na tabela principal
+				openUserModal(userKey); 
+				renderUsuarios(); 
+			} catch (error) {
+				alert("Erro ao deletar máquina. Verifique a conexão.");
+			}
+		}
+	}
+
+    async function saveUser() {
+        const e = document.getElementById('u-email').value.trim().toLowerCase();
+        const k = e.replace(/\./g, '_');
+        const d = { nome: document.getElementById('u-nome').value, email: e, limite_maquinas: parseInt(document.getElementById('u-limite').value), valor: parseFloat(document.getElementById('u-valor').value), data_venda: document.getElementById('u-venda').value, validade: document.getElementById('u-val').value || "Vitalício", obs: document.getElementById('u-obs').value, status: dbVendas[k] ? dbVendas[k].status : "ativo" };
+        await fetch(`${dbURL}vendas/${k}.json`, { method: 'PUT', body: JSON.stringify(d) });
+        closeModals(); refresh();
+    }
+
+    async function toggleStatus(k, c) { await fetch(`${dbURL}vendas/${k}/status.json`, { method:'PUT', body: JSON.stringify(c === 'ativo' ? 'bloqueado' : 'ativo') }); refresh(); }
+    async function deleteFin(id) { if(confirm("Excluir?")) { await fetch(`${dbURL}financeiro/${id}.json`, {method:'DELETE'}); refresh(); } }
+
+    // --- FILTROS ---
+    function filterUsers(type) {
+		uFilter = (uFilter === type) ? null : type;
+		
+		const input = document.getElementById('search-u'); // Localiza o input
+		const btnX = document.getElementById('btn-u-clear'); // Localiza o botão X
+
+		document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active-filter'));
+
+		if(uFilter) {
+			document.getElementById('card-'+type).classList.add('active-filter');
+			input.value = type; // Preenche o texto
+			btnX.style.display = "block"; // <-- ADICIONE ESTA LINHA: Faz o X aparecer
+		} else {
+			input.value = ""; // Limpa o texto
+			btnX.style.display = "none"; // <-- ADICIONE ESTA LINHA: Faz o X sumir
+		}
+		applyUFilter();
+	}
+	
+    function applyUFilter() {
+        document.querySelectorAll('#u-table tbody tr').forEach(tr => {
+            const s = tr.getAttribute('data-status'); const v = tr.getAttribute('data-vencido') === 'true';
+            if(!uFilter) tr.style.display = '';
+            else if(uFilter === 'vencido') tr.style.display = v ? '' : 'none';
+            else tr.style.display = s === uFilter ? '' : 'none';
+        });
+    }
+    // Filtro do Financeiro como Interruptor (Toggle)
+		let currentFinType = null; 
+
+		function filterFinByTipo(tipo) {
+			const input = document.getElementById('search-f');
+			const btnX = document.getElementById('btn-f-clear');
+			const rows = document.querySelectorAll('#f-table tbody tr');
+			const card = event.currentTarget;
+
+			// Padronização: Se vier "Saída" do clique, vira "Gasto" para bater com o banco
+			const tipoBusca = (tipo === 'Saída' || tipo === 'Saídas' || tipo === 'Gasto') ? 'Gasto' : 'Entrada';
+
+			if (currentFinType === tipoBusca) {
+				currentFinType = null;
+				input.value = "";
+				btnX.style.display = "none";
+				card.classList.remove('active-filter');
+				rows.forEach(tr => tr.style.display = ''); 
+			} else {
+				currentFinType = tipoBusca;
+				input.value = tipoBusca === 'Gasto' ? 'Saídas' : 'Entradas';
+				btnX.style.display = "block";
+				
+				document.querySelectorAll('#tab-financeiro .stat-card').forEach(c => c.classList.remove('active-filter'));
+				card.classList.add('active-filter');
+
+				rows.forEach(tr => {
+					const tipoLinha = tr.getAttribute('data-tipo');
+					// Filtra: mostra se o tipo da linha for igual ao tipo do card
+					tr.style.display = (tipoLinha === tipoBusca) ? '' : 'none';
+				});
+			}
+		}
+
+		// Reset do filtro financeiro
+		function clearFinFilter() {
+			fFilterActive = null;
+			document.getElementById('search-f').value = "";
+			document.getElementById('f-start').value = "";
+			document.getElementById('f-end').value = "";
+			document.querySelectorAll('.stat-card').forEach(c => c.classList.remove('active-filter'));
+			renderFinanceiro();
+		}
+
+    // --- UI ---
+    function toggleSidebar() { 
+		document.getElementById('sidebar').classList.toggle('collapsed'); 
+	}
+    // Alternar ícone do olho entre aberto e fechado
+	function togglePass(id) {
+		const i = document.getElementById(id);
+		const eye = document.getElementById('eye-icon');
+		if (i.type === 'password') {
+			i.type = 'text';
+			eye.innerText = '🔒'; // Ou use um ícone de sua preferência
+		} else {
+			i.type = 'password';
+			eye.innerText = '👁️';
+		}
+	}
+    function changeTab(t, el) { document.querySelectorAll('.section').forEach(s => s.classList.remove('active')); document.getElementById('tab-'+t).classList.add('active'); document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active')); el.classList.add('active'); }
+    function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display='none'); }
+    function searchTable(q, id) { const s = q.toLowerCase(); document.querySelectorAll(`#${id} tbody tr`).forEach(tr => tr.style.display = tr.innerText.toLowerCase().includes(s) ? '' : 'none'); }
+    function renderExtrato(id, data) {
+			const el = document.getElementById(id); el.innerHTML = "";
+			Object.entries(data).forEach(([g,v]) => { 
+				if(v > 0) el.innerHTML += `<div class="cat-item" onclick="document.getElementById('search-f').value='${g}'; document.getElementById('btn-f-clear').style.display='block'; searchTable('${g}', 'f-table')"><span>${g}</span><b>R$ ${v.toLocaleString('pt-BR', {minimumFractionDigits: 2})}</b></div>`; 
+			});
+		}
+    setInterval(() => document.getElementById('clock').innerText = new Date().toLocaleTimeString(), 1000);
+</script>
+</body>
+</html>
