@@ -4,7 +4,7 @@
 
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <link rel="apple-touch-icon" href="link-para-sua-logo.png">
 
     <meta charset="UTF-8">
@@ -21,18 +21,73 @@
 
         body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-		/* Ajustes para telas pequenas (Celular) */
+		/* --- AJUSTES PARA CELULAR (MOBILE) --- */
 		@media (max-width: 768px) {
-			nav.collapsed { width: 0; padding: 0; } /* Esconde a sidebar de vez no celular */
+			/* 1. Sidebar: No celular ela some totalmente para dar espaço */
+			nav.collapsed {
+				width: 0;
+				padding: 0;
+				border: none;
+			}
 			
-			.dash-grid { grid-template-columns: 1fr 1fr; } /* Cards em duas colunas */
-			
-			table { display: block; overflow-x: auto; white-space: nowrap; } /* Tabela ganha scroll lateral */
-			
-			.modal-content { width: 95%; padding: 15px; margin: 10px auto; }
-			.form-row { grid-template-columns: 1fr; } /* Formulário vira uma coluna só */
-			
-			.brand .logo { font-size: 16px; } /* Diminui logo para caber tudo */
+			/* 2. Main: Tira os espaçamentos exagerados */
+			main {
+				padding: 10px;
+			}
+
+			/* 3. Cards do Dashboard: Ficam em 2 colunas para não espremer */
+			.dash-grid {
+				grid-template-columns: 1fr 1fr;
+				gap: 10px;
+			}
+			.stat-card {
+				padding: 12px;
+			}
+			.stat-card .val {
+				font-size: 18px;
+			}
+
+			/* 4. Tabelas: O maior problema. Vamos colocar um scroll lateral */
+			.section {
+				width: 100%;
+				overflow-x: auto;
+			}
+			table {
+				display: block;
+				overflow-x: auto;
+				white-space: nowrap; /* Impede que o texto quebre linha e suje a tabela */
+			}
+
+			/* 5. Toolbar: Coloca os botões um embaixo do outro ou em wrap */
+			.toolbar {
+				flex-direction: column;
+				align-items: stretch;
+			}
+			.search-wrapper {
+				width: 100%;
+			}
+			.btn {
+				width: 100%;
+				justify-content: center;
+			}
+
+			/* 6. Modais: Deixa ocupando quase a tela toda */
+			.modal-content {
+				width: 95%;
+				margin: 10px auto;
+				padding: 15px;
+			}
+			.form-row {
+				grid-template-columns: 1fr; /* Formulário vira uma coluna só */
+			}
+
+			/* 7. Esconde o nome do Admin no Header para caber a logo */
+			.user-info {
+				font-size: 11px;
+			}
+			#admin-name {
+				display: none;
+			}
 		}
 		
         /* LOGIN */
@@ -55,6 +110,14 @@
         /* SIDEBAR DINÂMICA */
         nav { width: 230px; background: var(--card); padding: 15px; border-right: 1px solid #2d3436; display: flex; flex-direction: column; gap: 8px; transition: 0.3s; }
         nav.collapsed { width: 70px; padding: 15px 10px; }
+			@media (max-width: 768px) {
+				nav:not(.collapsed) { 
+					position: absolute; 
+					z-index: 500; 
+					height: 100%; 
+					box-shadow: 5px 0 15px rgba(0,0,0,0.5);
+				}
+			}
         .nav-item { padding: 12px 15px; border-radius: 8px; cursor: pointer; color: var(--text-dim); font-weight: 600; white-space: nowrap; display: flex; align-items: center; gap: 12px; }
         .nav-item i { font-style: normal; font-size: 18px; }
         .nav-item span { transition: opacity 0.2s; }
