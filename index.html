@@ -21,74 +21,59 @@
 
         body { font-family: 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-		/* --- AJUSTES PARA CELULAR (MOBILE) --- */
-		@media (max-width: 768px) {
-			/* 1. Sidebar: No celular ela some totalmente para dar espaço */
-			nav.collapsed {
-				width: 0;
-				padding: 0;
-				border: none;
-			}
-			
-			/* 2. Main: Tira os espaçamentos exagerados */
-			main {
-				padding: 10px;
-			}
+/* --- AJUSTE MOBILE DE ELITE --- */
+@media (max-width: 768px) {
+    /* 1. Cards do Dash: Todos na mesma linha com rolagem lateral */
+    .dash-grid {
+        display: flex;
+        overflow-x: auto;
+        gap: 10px;
+        padding-bottom: 10px;
+        scrollbar-width: none; /* Esconde barra no Firefox */
+    }
+    .dash-grid::-webkit-scrollbar { display: none; } /* Esconde barra no Chrome */
+    
+    .stat-card {
+        min-width: 140px; /* Garante que os cards não esmaguem */
+        flex: 0 0 auto;
+        padding: 10px;
+    }
+    .stat-card h3 { font-size: 11px; }
+    .stat-card .val { font-size: 16px; }
 
-			/* 3. Cards do Dashboard: Ficam em 2 colunas para não espremer */
-			.dash-grid {
-				grid-template-columns: 1fr 1fr;
-				gap: 10px;
-			}
-			.stat-card {
-				padding: 12px;
-			}
-			.stat-card .val {
-				font-size: 18px;
-			}
+    /* 2. Tabelas: Forçar a barra de rolagem lateral */
+    .section {
+        width: 100%;
+        overflow-x: hidden; /* Evita que o site todo balance */
+    }
+    
+    /* Criar um container para a tabela no HTML ou usar este seletor */
+    #u-table, #f-table {
+        display: table; /* Mantém o formato de tabela */
+        min-width: 600px; /* Força a tabela a ser larga para aparecer a rolagem */
+    }
 
-			/* 4. Tabelas: O maior problema. Vamos colocar um scroll lateral */
-			.section {
-				width: 100%;
-				overflow-x: auto;
-			}
-			table {
-				display: block;
-				overflow-x: auto;
-				white-space: nowrap; /* Impede que o texto quebre linha e suje a tabela */
-			}
+    /* Container de rolagem para as tabelas */
+    #tab-usuarios, #tab-financeiro {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        padding-bottom: 15px;
+    }
 
-			/* 5. Toolbar: Coloca os botões um embaixo do outro ou em wrap */
-			.toolbar {
-				flex-direction: column;
-				align-items: stretch;
-			}
-			.search-wrapper {
-				width: 100%;
-			}
-			.btn {
-				width: 100%;
-				justify-content: center;
-			}
+    /* 3. Toolbar: Ajuste para não ocupar a tela toda */
+    .toolbar {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    .search-input {
+        font-size: 14px; /* Evita zoom automático do iPhone */
+        padding: 8px;
+    }
 
-			/* 6. Modais: Deixa ocupando quase a tela toda */
-			.modal-content {
-				width: 95%;
-				margin: 10px auto;
-				padding: 15px;
-			}
-			.form-row {
-				grid-template-columns: 1fr; /* Formulário vira uma coluna só */
-			}
-
-			/* 7. Esconde o nome do Admin no Header para caber a logo */
-			.user-info {
-				font-size: 11px;
-			}
-			#admin-name {
-				display: none;
-			}
-		}
+    /* 4. Fontes gerais menores no celular */
+    table { font-size: 11px; }
+    th, td { padding: 8px 5px; }
+}
 		
         /* LOGIN */
 		#login-screen { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
@@ -204,6 +189,32 @@
         .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 15px; }
         .form-group label { font-size: 11px; color: var(--text-dim); font-weight: bold; }
         .form-group input, .form-group select, .form-group textarea { background: var(--input-bg); border: 1px solid #333; color: #fff; padding: 12px; border-radius: 8px; outline: none; }
+		
+		@media (max-width: 768px) {
+			/* Menu Lateral Some no Mobile para ganhar espaço */
+			nav.collapsed { width: 0; padding: 0; border: none; }
+			
+			/* Dash Grid vira carrossel lateral */
+			.dash-grid {
+				display: flex !important;
+				overflow-x: auto !important;
+				gap: 10px;
+				padding-bottom: 10px;
+				-webkit-overflow-scrolling: touch;
+			}
+			.stat-card {
+				min-width: 150px;
+				flex: 0 0 auto;
+			}
+
+			/* Ajuste de fontes e tabelas */
+			table { font-size: 11px !important; }
+			.toolbar { flex-direction: column; align-items: stretch; }
+			.btn { width: 100%; justify-content: center; }
+			
+			/* Resumo financeiro um embaixo do outro */
+			.fin-summary { grid-template-columns: 1fr; }
+		}
     </style>
 </head>
 <body>
@@ -242,60 +253,76 @@
 
     <main>
         <div id="tab-usuarios" class="section active">
-            <div class="dash-grid">
-                <div class="stat-card" id="card-ativo" onclick="filterUsers('ativo')"><h3>Ativos</h3><p class="val" id="c-ativos">0</p></div>
-                <div class="stat-card" id="card-bloqueado" onclick="filterUsers('bloqueado')"><h3>Bloqueados</h3><p class="val" id="c-bloqueados">0</p></div>
-                <div class="stat-card" id="card-vencido" onclick="filterUsers('vencido')"><h3>Vencidos</h3><p class="val" id="c-vencidos">0</p></div>
-                <div class="stat-card" style="cursor:default"><h3>Máquinas Ativas</h3><p class="val" id="c-maquinas">0</p></div>
-            </div>
+			<div class="dash-grid">
+				<div class="stat-card" id="card-ativo" onclick="filterUsers('ativo')"><h3>Ativos</h3><p class="val" id="c-ativos">0</p></div>
+				<div class="stat-card" id="card-bloqueado" onclick="filterUsers('bloqueado')"><h3>Bloqueados</h3><p class="val" id="c-bloqueados">0</p></div>
+				<div class="stat-card" id="card-vencido" onclick="filterUsers('vencido')"><h3>Vencidos</h3><p class="val" id="c-vencidos">0</p></div>
+				<div class="stat-card" style="cursor:default"><h3>Máquinas Ativas</h3><p class="val" id="c-maquinas">0</p></div>
+			</div>
 
-            <div class="toolbar">
-                <div class="search-wrapper">
-					<input type="text" id="search-u" class="search-input" placeholder="Filtrar usuários..." 
-						   onkeyup="checkSearch('search-u', 'btn-u-clear', 'u-table')">
+			<div class="toolbar">
+				<div class="search-wrapper">
+					<input type="text" id="search-u" class="search-input" placeholder="Filtrar usuários..." onkeyup="checkSearch('search-u', 'btn-u-clear', 'u-table')">
 					<span id="btn-u-clear" class="btn-clear-search" onclick="resetSearch('search-u', 'btn-u-clear', 'u-table')">✖</span>
 				</div>
-                <button class="btn btn-primary" onclick="openUserModal()">+ Adicionar Usuário</button>
-            </div>
+				<button class="btn btn-primary" onclick="openUserModal()">+ Adicionar Usuário</button>
+			</div>
 
-            <table id="u-table">
-                <thead><tr><th>Cliente</th><th>Máquinas IDs</th><th>Qtd</th><th>Vencimento</th><th>Status</th><th>Ações</th></tr></thead>
-                <tbody id="body-u"></tbody>
-            </table>
-        </div>
+			<div style="overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch; border-radius: 12px;">
+				<table id="u-table" style="min-width: 800px;">
+					<thead>
+						<tr>
+							<th>Cliente</th>
+							<th>Máquinas IDs</th>
+							<th>Qtd</th>
+							<th>Vencimento</th>
+							<th>Status</th>
+							<th>Ações</th>
+						</tr>
+					</thead>
+					<tbody id="body-u"></tbody>
+				</table>
+			</div>
+		</div>
 
         <div id="tab-financeiro" class="section">
-            <div class="dash-grid">
-                <div class="stat-card" style="border-left-color: var(--success)" onclick="filterFinByTipo('Entrada')"><h3>Entradas</h3><p class="val" id="f-in">R$ 0,00</p></div>
-                <div class="stat-card" style="border-left-color: var(--danger)" onclick="filterFinByTipo('Gasto')">
-					<h3>Saídas</h3>
-					<p class="val" id="f-out">R$ 0,00</p>
-				</div>
-                <div class="stat-card" onclick="clearFinFilter()"><h3>Saldo Período</h3><p class="val" id="f-total">R$ 0,00</p></div>
-            </div>
+			<div class="dash-grid">
+				<div class="stat-card" style="border-left-color: var(--success)" onclick="filterFinByTipo('Entrada')"><h3>Entradas</h3><p class="val" id="f-in">R$ 0,00</p></div>
+				<div class="stat-card" style="border-left-color: var(--danger)" onclick="filterFinByTipo('Gasto')"><h3>Saídas</h3><p class="val" id="f-out">R$ 0,00</p></div>
+				<div class="stat-card" onclick="clearFinFilter()"><h3>Saldo Período</h3><p class="val" id="f-total">R$ 0,00</p></div>
+			</div>
 
-            <div class="fin-summary">
-                <div class="cat-list"><h4 style="margin:0 0 10px 0; color:var(--success)">Entradas por Grupo</h4><div id="ext-in"></div></div>
-                <div class="cat-list"><h4 style="margin:0 0 10px 0; color:var(--danger)">Saídas por Grupo</h4><div id="ext-out"></div></div>
-            </div>
+			<div class="fin-summary">
+				<div class="cat-list"><h4 style="margin:0 0 10px 0; color:var(--success)">Entradas por Grupo</h4><div id="ext-in"></div></div>
+				<div class="cat-list"><h4 style="margin:0 0 10px 0; color:var(--danger)">Saídas por Grupo</h4><div id="ext-out"></div></div>
+			</div>
 
-            <div class="toolbar">
-                <input type="date" id="f-start" class="search-input" style="max-width:130px" onchange="renderFinanceiro()">
-                <input type="date" id="f-end" class="search-input" style="max-width:130px" onchange="renderFinanceiro()">
-                <div class="search-wrapper">
-					<input type="text" id="search-f" class="search-input" placeholder="Buscar no extrato..." 
-						   onkeyup="checkSearch('search-f', 'btn-f-clear', 'f-table')">
+			<div class="toolbar">
+				<input type="date" id="f-start" class="search-input" style="max-width:130px" onchange="renderFinanceiro()">
+				<input type="date" id="f-end" class="search-input" style="max-width:130px" onchange="renderFinanceiro()">
+				<div class="search-wrapper">
+					<input type="text" id="search-f" class="search-input" placeholder="Buscar no extrato..." onkeyup="checkSearch('search-f', 'btn-f-clear', 'f-table')">
 					<span id="btn-f-clear" class="btn-clear-search" onclick="resetSearch('search-f', 'btn-f-clear', 'f-table')">✖</span>
 				</div>
-                <button class="btn btn-primary" style="background:var(--success); color:#000" onclick="openFinModal('Entrada')">+ Entrada</button>
-                <button class="btn btn-primary" style="background:var(--danger)" onclick="openFinModal('Gasto')">+ Gasto</button>
-            </div>
+				<button class="btn btn-primary" style="background:var(--success); color:#000" onclick="openFinModal('Entrada')">+ Entrada</button>
+				<button class="btn btn-primary" style="background:var(--danger)" onclick="openFinModal('Gasto')">+ Gasto</button>
+			</div>
 
-            <table id="f-table">
-                <thead><tr><th>Data</th><th>Descrição</th><th>Grupo</th><th>Valor</th><th>Ações</th></tr></thead>
-                <tbody id="body-f"></tbody>
-            </table>
-        </div>
+			<div style="overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch; border-radius: 12px;">
+				<table id="f-table" style="min-width: 800px;">
+					<thead>
+						<tr>
+							<th>Data</th>
+							<th>Descrição</th>
+							<th>Grupo</th>
+							<th>Valor</th>
+							<th>Ações</th>
+						</tr>
+					</thead>
+					<tbody id="body-f"></tbody>
+				</table>
+			</div>
+		</div>
     </main>
 </div>
 
